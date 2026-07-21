@@ -1,0 +1,16 @@
+
+Item: 
+    Name 
+    Description 
+
+
+Menu: list of all Items 
+
+Order 
+    items = list of Items 
+    Name of person 
+    expected dropoff: pickup / next OC visit 
+    status= ordered/received/baking/shipping/awaiting delivery 
+
+Chef
+    OC visit dates
