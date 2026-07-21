@@ -13,22 +13,29 @@ import { Controller, useForm } from "react-hook-form";
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import { useQueryClient } from "@tanstack/react-query";
-import { useCreateItem } from "../../hooks/api/useCreateItem";
+import { useEffect } from "react";
+import { useUpdateItem } from "../../hooks/api/useUpdateItem";
 
 const schema = yup
   .object({
     name: yup.string().required(),
     description: yup.string().required(),
-    picture: yup.mixed<File>().required("Picture is required"),
+    picture: yup.mixed<File>().nullable().notRequired(),
   })
   .required();
 
-export const NewMenuItemModal = ({
+export const UpdateMenuItemModal = ({
   open,
   onClose,
+  item,
 }: {
   open: boolean;
   onClose: () => void;
+  item: {
+    id: string;
+    name: string;
+    description: string;
+  } | null;
 }) => {
   const qc = useQueryClient();
 
@@ -42,7 +49,17 @@ export const NewMenuItemModal = ({
     mode: "onChange",
   });
 
-  const { mutateAsync: createItem, isPending } = useCreateItem({
+  useEffect(() => {
+    if (open && item) {
+      reset({
+        name: item.name,
+        description: item.description,
+        picture: undefined,
+      });
+    }
+  }, [item, open, reset]);
+
+  const { mutateAsync: updateItem, isPending } = useUpdateItem({
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["items"] });
       onClose();
@@ -51,7 +68,7 @@ export const NewMenuItemModal = ({
 
   return (
     <Dialog open={open} onClose={onClose}>
-      <DialogTitle>New Menu Item</DialogTitle>
+      <DialogTitle>Update Menu Item</DialogTitle>
       <Divider />
       <DialogContent
         sx={{
@@ -81,7 +98,7 @@ export const NewMenuItemModal = ({
               <Box sx={{ color: "red" }}>{formState.errors.description.message}</Box>
             )}
 
-            <FormLabel>Picture</FormLabel>
+            <FormLabel>Update Picture? Optional</FormLabel>
             <Controller
               control={control}
               name="picture"
@@ -120,19 +137,24 @@ export const NewMenuItemModal = ({
           Cancel
         </Button>
         <Button
-          disabled={isPending || !formState.isValid}
+          disabled={isPending || !formState.isValid || !item}
           color="success"
           variant="outlined"
           onClick={handleSubmit(async ({ name, description }) => {
-            await createItem({
+            if (!item?.id) {
+              return;
+            }
+
+            await updateItem({
+              id: item.id,
               name,
               description,
-              picture: getValues("picture") as File,
+              picture: getValues("picture") ?? undefined,
             });
             reset();
           })}
         >
-          Submit
+          Update
         </Button>
       </DialogActions>
     </Dialog>

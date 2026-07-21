@@ -15,6 +15,7 @@ export const useCreateItem = ({
         variables: {
           name: string;
           description: string;
+          picture: File;
         },
         onMutateResult: unknown,
         context: MutationFunctionContext,
@@ -26,6 +27,7 @@ export const useCreateItem = ({
         variables: {
           name: string;
           description: string;
+          picture: File;
         },
         onMutateResult: unknown,
         context: MutationFunctionContext,
@@ -38,23 +40,24 @@ export const useCreateItem = ({
     mutationFn: async ({
       name,
       description,
-      picture
+      picture,
     }: {
       name: string;
       description: string;
       picture: File;
     }) => {
       const newItem = await client.models.Item.create({
-        name: name,
-        description: description,
+        name,
+        description,
       });
 
-    if(newItem.data?.id){
-        uploadData({
-            path:`items/${newItem}/image.jpg`,
-            data : picture,
-        })
-    }
+      if (newItem.data?.id) {
+        await uploadData({
+          path: `items/${newItem.data.id}/image.jpg`,
+          data: picture,
+        }).result;
+      }
+
       return newItem.data?.id;
     },
     onError,

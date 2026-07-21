@@ -2,47 +2,60 @@ import {
   Accordion,
   AccordionDetails,
   AccordionSummary,
-  Card,
-  CardContent,
-  CardHeader,
-  CardMedia,
   CircularProgress,
   Grid,
   IconButton,
+  Menu as MuiMenu,
   MenuItem,
   Typography,
-  Menu as MuiMenu,
 } from "@mui/material";
 import AddCircleTwoToneIcon from "@mui/icons-material/AddCircleTwoTone";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import { NewMenuItemModal } from "./NewMenuItemModal";
-import { useState } from "react";
-import { useGetItems } from "../../hooks/api/useGetItems";
-import { StorageImage } from "@aws-amplify/ui-react-storage";
-import MoreVertIcon from "@mui/icons-material/MoreVert";
+import { UpdateMenuItemModal } from "./UpdateMenuItemModal";
+import { useMemo, useState } from "react";
 import { ConfirmModal } from "../ConfirmModal";
 import { useDeleteItem } from "../../hooks/api/useDeleteItem";
 import { useQueryClient } from "@tanstack/react-query";
+import { MenuItemCard } from "./MenuItemCard";
 
-export const Menu = () => {
+export type MenuItemRecord = {
+  id: string;
+  name: string;
+  description: string;
+};
+
+export const Menu = ({
+  items,
+  isItemsLoading,
+  onAddToOrder,
+}: {
+  items: MenuItemRecord[];
+  isItemsLoading: boolean;
+  onAddToOrder: (item: MenuItemRecord) => Promise<void>;
+}) => {
   const qc = useQueryClient();
   const [openNewMenuItemModal, setOpenNewMenuItemModal] = useState(false);
+  const [openUpdateMenuItemModal, setOpenUpdateMenuItemModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
 
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
   const open = Boolean(anchorEl);
 
+  const selectedItem = useMemo(
+    () => items.find((item) => item.id === selectedItemId) ?? null,
+    [items, selectedItemId],
+  );
+
   const handleClose = () => {
     setAnchorEl(null);
-    setSelectedItemId(null);
   };
-
-  const { data: items, isLoading: isItemsLoading } = useGetItems();
 
   const { mutateAsync: deleteItem } = useDeleteItem({
     onSuccess: () => {
       setOpenConfirmModal(false);
+      setSelectedItemId(null);
       qc.invalidateQueries({ queryKey: ["items"] });
     },
   });
@@ -56,21 +69,23 @@ export const Menu = () => {
       <Accordion sx={{ width: "100%" }} defaultExpanded>
         <AccordionSummary
           sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            width: "100%",
+            "& .MuiAccordionSummary-content": {
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              width: "100%",
+            },
           }}
           expandIcon={<ExpandMoreIcon />}
         >
-          <Typography variant="h2">Menu</Typography>
+          <Typography variant="h2" sx={{ fontSize: { xs: "1.35rem", md: "3rem" } }}>Menu</Typography>
           <IconButton
             onClick={(event) => {
               setOpenNewMenuItemModal(true);
               event.stopPropagation();
             }}
           >
-            <AddCircleTwoToneIcon fontSize="large" sx={{}} />
+            <AddCircleTwoToneIcon fontSize="large" />
           </IconButton>
         </AccordionSummary>
         <AccordionDetails>
@@ -84,62 +99,40 @@ export const Menu = () => {
               alignItems: "center",
             }}
           >
-            {items?.data.map((item) => {
-              return (
-                <Card
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    maxHeight: "350px",
-                    maxWidth: "500px",
-                  }}
-                  key={item.id}
-                >
-                  <CardHeader
-                    title={item.name}
-                    action={
-                      <>
-                        <IconButton
-                          aria-label="settings"
-                          onClick={(event) => {
-                            setAnchorEl(event.currentTarget);
-                            setSelectedItemId(item.id);
-                          }}
-                        >
-                          <MoreVertIcon />
-                        </IconButton>
-                        <MuiMenu
-                          anchorEl={anchorEl}
-                          open={open}
-                          onClose={handleClose}
-                          slotProps={{
-                            list: {},
-                          }}
-                        >
-                          <MenuItem onClick={()=>{
-                            setOpenConfirmModal(true);
-                            setAnchorEl(null);
-                          }}>Delete</MenuItem>
-                        </MuiMenu>
-                      </>
-                    }
-                  />
-                  <CardMedia sx={{ }}>
-                    <StorageImage
-                      alt={item.name as string}
-                      path={`items/${item.id}/image.jpg`}
-                    />
-                  </CardMedia>
-                  <CardContent sx={{
-                    overflow:'scroll',
-                    maxHeight:"200px",
-                    minHeight:"200px"
-                  }}>
-                    <Typography variant="body2">{item.description}</Typography>
-                  </CardContent>
-                </Card>
-              );
-            })}
+            {items.map((item) => (
+              <MenuItemCard
+                key={item.id}
+                item={item}
+                onAddToOrder={onAddToOrder}
+                onOpenItemMenu={(event, itemId) => {
+                  setAnchorEl(event.currentTarget);
+                  setSelectedItemId(itemId);
+                }}
+              />
+            ))}
+
+            <MuiMenu
+              anchorEl={anchorEl}
+              open={open}
+              onClose={handleClose}
+            >
+              <MenuItem
+                onClick={() => {
+                  setOpenUpdateMenuItemModal(true);
+                  setAnchorEl(null);
+                }}
+              >
+                Edit
+              </MenuItem>
+              <MenuItem
+                onClick={() => {
+                  setOpenConfirmModal(true);
+                  setAnchorEl(null);
+                }}
+              >
+                Delete
+              </MenuItem>
+            </MuiMenu>
           </Grid>
         </AccordionDetails>
       </Accordion>
@@ -149,13 +142,21 @@ export const Menu = () => {
           setOpenNewMenuItemModal(false);
         }}
       />
+      <UpdateMenuItemModal
+        open={openUpdateMenuItemModal}
+        onClose={() => {
+          setOpenUpdateMenuItemModal(false);
+          setSelectedItemId(null);
+        }}
+        item={selectedItem}
+      />
       <ConfirmModal
         open={openConfirmModal}
         onClose={() => setOpenConfirmModal(false)}
         title="Confirm Delete Menu Item"
         message="Are you sure you would like to delete this menu item?"
         onConfirm={async () => {
-            await deleteItem({id: selectedItemId as string});
+          await deleteItem({ id: selectedItemId as string });
         }}
       />
     </>
