@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAmplifyClient } from "./useAmplifyClient";
 
-export type OrderStatus = "ORDERED" | "PREPARING" | "READY" | "DELIVERING" | "DELIVERED";
+export type OrderStatus = "ORDERING" | "ORDERED" | "PREPARING" | "READY" | "DELIVERING" | "DELIVERED";
 
 export const useUpdateOrderStatus = () => {
   const client = useAmplifyClient();

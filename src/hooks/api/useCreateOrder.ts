@@ -6,7 +6,7 @@ export type CreateOrderInput = {
   household: string;
   expectedDeliveryDate: string;
   notes: string;
-  status: "ORDERED" | "PREPARING" | "READY" | "DELIVERING" | "DELIVERED";
+  status: "ORDERING" | "ORDERED" | "PREPARING" | "READY" | "DELIVERING" | "DELIVERED";
 };
 
 export const useCreateOrder = () => {

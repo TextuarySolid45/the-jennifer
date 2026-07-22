@@ -1,6 +1,5 @@
 import { useMutation } from "@tanstack/react-query";
 import { useAmplifyClient } from "./useAmplifyClient";
-import { remove } from "aws-amplify/storage";
 
 export const useDeleteItem = ({
   onError,
@@ -14,15 +13,14 @@ export const useDeleteItem = ({
   return useMutation({
     mutationFn: async ({ id }: { id: string }) => {
       try {
-        await client.models.Item.delete({ id });
-
-        await remove({
-          path: `items/${id}/`,
+        await client.models.Item.update({
+          id,
+          deletedAt: new Date().toISOString(),
         });
 
         return true;
       } catch (error) {
-        console.log("Error deleting item:", error);
+        console.log("Error soft deleting item:", error);
         return false;
       }
     },

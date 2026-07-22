@@ -17,10 +17,9 @@ export const useDeleteOrder = () => {
       await client.models.Order.delete({ id });
     },
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["orders"] }),
-        queryClient.invalidateQueries({ queryKey: ["orderItems"] }),
-      ]);
+      // Ensure order lists refresh immediately after delete.
+      await queryClient.invalidateQueries({ queryKey: ["orders"] });
+      await queryClient.invalidateQueries({ queryKey: ["orderItems"] });
     },
   });
 };

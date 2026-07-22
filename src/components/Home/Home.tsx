@@ -76,6 +76,11 @@ export const Home = () => {
     [orderItems, selectedOrderId],
   );
 
+  const selectedActiveOrder = useMemo(
+    () => activeOrders.find((order) => order.id === selectedOrderId) ?? null,
+    [activeOrders, selectedOrderId],
+  );
+
   const itemLookup = useMemo(() => {
     return new Map(
       items.map((item) => [item.id, { id: item.id, name: item.name ?? "Unknown Item" }]),
@@ -139,7 +144,7 @@ export const Home = () => {
               name: order.name ?? "New Order",
               household: order.household ?? "General",
               expectedDeliveryDate: order.expectedDeliveryDate ?? "",
-              status: (order.status ?? "ORDERED") as OrderStatus,
+              status: (order.status ?? "ORDERING") as OrderStatus,
             }))}
           selectedOrderId={selectedOrderId}
           onSelectOrder={(orderId) => {
@@ -152,7 +157,7 @@ export const Home = () => {
               household: "General",
               expectedDeliveryDate: getTodayDate(),
               notes: "",
-              status: "ORDERED",
+              status: "ORDERING",
             });
 
             setSelectedOrderId(newOrderId);
@@ -210,7 +215,15 @@ export const Home = () => {
           }))}
         itemLookup={itemLookup}
         totalItems={totalSelectedOrderItems}
+        canCompleteOrder={selectedActiveOrder?.status === "ORDERING"}
         onClose={() => setIsOrderPanelOpen(false)}
+        onCompleteOrder={async (orderId) => {
+          await updateOrderStatus.mutateAsync({
+            id: orderId,
+            status: "ORDERED",
+          });
+          setIsOrderPanelOpen(false);
+        }}
         onDeleteOrder={async () => {
           setOpenDeleteOrderConfirm(true);
         }}

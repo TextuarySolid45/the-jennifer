@@ -35,7 +35,9 @@ export const OrderSidePanel = ({
   orderItems,
   itemLookup,
   totalItems,
+  canCompleteOrder,
   onClose,
+  onCompleteOrder,
   onDeleteOrder,
   onIncrease,
   onDecrease,
@@ -50,7 +52,9 @@ export const OrderSidePanel = ({
   orderItems: OrderSidePanelItem[];
   itemLookup: Map<string, ItemLookupRecord>;
   totalItems: number;
+  canCompleteOrder: boolean;
   onClose: () => void;
+  onCompleteOrder: (orderId: string) => Promise<void>;
   onDeleteOrder: (orderId: string) => Promise<void>;
   onIncrease: (orderItemId: string, quantity: number) => Promise<void>;
   onDecrease: (orderItemId: string, quantity: number) => Promise<void>;
@@ -110,7 +114,6 @@ export const OrderSidePanel = ({
               onClick={async () => {
                 await onDeleteOrder(order.id);
               }}
-              sx={{ display: { xs: "inline-flex", md: "none" } }}
             >
               <DeleteIcon />
             </IconButton>
@@ -122,25 +125,35 @@ export const OrderSidePanel = ({
         </Box>
       </Box>
 
-      <Typography variant="body2" sx={{ mb: 1.5, display: { xs: "none", md: "block" } }}>
-        {`${order.name} (${order.household})`}
-      </Typography>
-
-      <Divider sx={{ mb: { xs: 1, md: 2 } }} />
-
-      <Chip label={`${totalItems} items`} color="primary" sx={{ mb: { xs: 1, md: 2 } }} />
-
-      <Button
-        color="error"
-        variant="outlined"
-        fullWidth
-        sx={{ mb: 2, display: { xs: "none", md: "inline-flex" } }}
-        onClick={async () => {
-          await onDeleteOrder(order.id);
+      <Box
+        sx={{
+          mb: 1.5,
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          gap: 1,
         }}
       >
-        Delete Order
-      </Button>
+        <Chip
+          label={`${totalItems} items`}
+          color="primary"
+          size="small"
+          sx={{ display: "inline-flex", flexShrink: 0 }}
+        />
+
+        <Button
+          variant="contained"
+          size="small"
+          onClick={async () => {
+            await onCompleteOrder(order.id);
+          }}
+          disabled={!canCompleteOrder}
+        >
+          Complete
+        </Button>
+      </Box>
+
+      <Divider sx={{ mb: { xs: 1, md: 2 } }} />
 
       {orderItems.length === 0 && (
         <Typography variant="body2">No items yet. Add items from the menu.</Typography>

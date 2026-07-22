@@ -13,7 +13,14 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddCircleTwoToneIcon from "@mui/icons-material/AddCircleTwoTone";
 import type { OrderStatus } from "../../hooks/api/useUpdateOrderStatus";
 
-const STATUS_OPTIONS: OrderStatus[] = ["ORDERED", "PREPARING", "READY", "DELIVERING", "DELIVERED"];
+const STATUS_OPTIONS: OrderStatus[] = [
+  "ORDERING",
+  "ORDERED",
+  "PREPARING",
+  "READY",
+  "DELIVERING",
+  "DELIVERED",
+];
 
 export type ActiveOrderRecord = {
   id: string;
@@ -49,15 +56,20 @@ export const OrdersAccordion = ({
           },
         }}
       >
-        <Typography variant="h2" sx={{ fontSize: { xs: "1.35rem", md: "3rem" } }}>Orders ({activeOrders.length})</Typography>
-        <IconButton
-          onClick={async (event) => {
-            event.stopPropagation();
-            await onCreateOrder();
-          }}
-        >
-          <AddCircleTwoToneIcon fontSize="large" />
-        </IconButton>
+        <Typography variant="h2" sx={{ fontSize: { xs: "1.35rem", md: "3rem" } }}>
+          Orders ({activeOrders.length})
+        </Typography>
+
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+          <IconButton
+            onClick={async (event) => {
+              event.stopPropagation();
+              await onCreateOrder();
+            }}
+          >
+            <AddCircleTwoToneIcon fontSize="large" />
+          </IconButton>
+        </Box>
       </AccordionSummary>
       <AccordionDetails>
         {activeOrders.length === 0 && <Typography variant="body1">No active orders yet.</Typography>}
@@ -88,12 +100,12 @@ export const OrdersAccordion = ({
                   label="Status"
                   size="small"
                   select
-                  value={(order.status ?? "ORDERED") as OrderStatus}
+                  value={(order.status ?? "ORDERING") as OrderStatus}
                   onClick={(event) => event.stopPropagation()}
                   onChange={async (event) => {
                     await onUpdateStatus(order.id, event.target.value as OrderStatus);
                   }}
-                  sx={{ minWidth: 180 }}
+                  sx={{ minWidth: 180, backgroundColor: "#F6F1E8"}}
                 >
                   {STATUS_OPTIONS.map((statusOption) => (
                     <MenuItem key={statusOption} value={statusOption}>

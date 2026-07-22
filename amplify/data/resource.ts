@@ -10,6 +10,7 @@ const schema = a.schema({
     .model({
       name: a.string().required(),
       description: a.string().required(),
+      deletedAt: a.string(),
       orderItems: a.hasMany("OrderItem", "itemId"),
     })
     .authorization((allow) => [allow.publicApiKey()]),
@@ -30,6 +31,7 @@ const schema = a.schema({
       expectedDeliveryDate: a.date().required(),
       notes: a.string().required().default(""),
       status: a.enum([
+        "ORDERING",
         "ORDERED",
         "PREPARING",
         "READY",
