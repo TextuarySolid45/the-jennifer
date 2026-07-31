@@ -15,6 +15,7 @@ export const useGetOrders = () => {
           "expectedDeliveryDate",
           "notes",
           "status",
+          "submittedAt",
           "createdAt",
           "updatedAt",
         ],

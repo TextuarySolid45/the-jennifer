@@ -19,6 +19,7 @@ const mocks = vi.hoisted(() => ({
   createOrderMutateAsync: vi.fn(),
   addItemToOrderMutateAsync: vi.fn(),
   updateOrderStatusMutateAsync: vi.fn(),
+  completeOrderMutateAsync: vi.fn(),
   updateOrderItemQuantityMutateAsync: vi.fn(),
   deleteOrderItemMutateAsync: vi.fn(),
   deleteOrderMutateAsync: vi.fn(),
@@ -46,6 +47,10 @@ vi.mock("../../../hooks/api/useAddItemToOrder", () => ({
 
 vi.mock("../../../hooks/api/useUpdateOrderStatus", () => ({
   useUpdateOrderStatus: () => ({ mutateAsync: mocks.updateOrderStatusMutateAsync }),
+}));
+
+vi.mock("../../../hooks/api/useCompleteOrder", () => ({
+  useCompleteOrder: () => ({ mutateAsync: mocks.completeOrderMutateAsync }),
 }));
 
 vi.mock("../../../hooks/api/useUpdateOrderItemQuantity", () => ({
@@ -220,6 +225,12 @@ describe("Home flows", () => {
       },
     );
 
+    mocks.completeOrderMutateAsync.mockImplementation(async ({ id }: { id: string }) => {
+      state.orders = state.orders.map((entry) =>
+        entry.id === id ? { ...entry, status: "ORDERED" } : entry,
+      );
+    });
+
     mocks.addItemToOrderMutateAsync.mockResolvedValue("order-1");
     mocks.updateOrderItemQuantityMutateAsync.mockResolvedValue(undefined);
     mocks.deleteOrderItemMutateAsync.mockResolvedValue(undefined);
@@ -247,9 +258,8 @@ describe("Home flows", () => {
     await user.click(screen.getByRole("button", { name: "Complete Current Order" }));
 
     await waitFor(() => {
-      expect(mocks.updateOrderStatusMutateAsync).toHaveBeenCalledWith({
+      expect(mocks.completeOrderMutateAsync).toHaveBeenCalledWith({
         id: "order-2",
-        status: "ORDERED",
       });
     });
 

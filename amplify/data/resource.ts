@@ -5,7 +5,7 @@ const schema = a.schema({
     .model({
       visits: a.date().array(),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [allow.authenticated()]),
   Item: a
     .model({
       name: a.string().required(),
@@ -13,7 +13,10 @@ const schema = a.schema({
       deletedAt: a.string(),
       orderItems: a.hasMany("OrderItem", "itemId"),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated().to(["create", "read", "update", "delete"]),
+    ]),
   OrderItem: a
     .model({
       itemId: a.id(),
@@ -22,7 +25,10 @@ const schema = a.schema({
       order: a.belongsTo("Order", "orderId"),
       quantity: a.integer().required(),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.guest().to(["create", "read", "update", "delete"]),
+      allow.authenticated().to(["create", "read", "update", "delete"]),
+    ]),
   Order: a
     .model({
       items: a.hasMany("OrderItem", "orderId"),
@@ -30,23 +36,31 @@ const schema = a.schema({
       household: a.string().required(),
       expectedDeliveryDate: a.date().required(),
       notes: a.string().required().default(""),
-      status: a.enum([
-        "ORDERING",
-        "ORDERED",
-        "PREPARING",
-        "READY",
-        "DELIVERING",
-        "DELIVERED",
-      ]),
+      // Guests may only flip this timestamp to submit their own order (ORDERING -> ORDERED);
+      // everything past that is driven by `status`, which guests can read but never write.
+      submittedAt: a
+        .string()
+        .authorization((allow) => [
+          allow.guest().to(["read", "update"]),
+          allow.authenticated().to(["read", "update"]),
+        ]),
+      status: a
+        .string()
+        .authorization((allow) => [
+          allow.guest().to(["read"]),
+          allow.authenticated().to(["create", "read", "update"]),
+        ]),
     })
-    .authorization((allow) => [allow.publicApiKey()]),
+    .authorization((allow) => [
+      allow.guest().to(["create", "read", "update", "delete"]),
+      allow.authenticated().to(["create", "read", "update", "delete"]),
+    ]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
 export const data = defineData({
   schema,
   authorizationModes: {
-    defaultAuthorizationMode: "apiKey",
-    apiKeyAuthorizationMode: { expiresInDays: 30 },
+    defaultAuthorizationMode: "identityPool",
   },
 });

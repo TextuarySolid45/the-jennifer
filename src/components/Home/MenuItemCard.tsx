@@ -13,10 +13,12 @@ import type { MenuItemRecord } from "./Menu";
 
 export const MenuItemCard = ({
   item,
+  canManage,
   onAddToOrder,
   onOpenItemMenu,
 }: {
   item: MenuItemRecord;
+  canManage: boolean;
   onAddToOrder: (item: MenuItemRecord) => Promise<void>;
   onOpenItemMenu: (event: React.MouseEvent<HTMLElement>, itemId: string) => void;
 }) => {
@@ -58,19 +60,21 @@ export const MenuItemCard = ({
           {item.name}
         </Typography>
 
-        <IconButton
-          aria-label="settings"
-          onClick={(event) => {
-            event.stopPropagation();
-            onOpenItemMenu(event, item.id);
-          }}
-          sx={{
-            color: "text.primary",
-            backgroundColor: "background.paper",
-          }}
-        >
-          <MoreVertIcon />
-        </IconButton>
+        {canManage && (
+          <IconButton
+            aria-label="settings"
+            onClick={(event) => {
+              event.stopPropagation();
+              onOpenItemMenu(event, item.id);
+            }}
+            sx={{
+              color: "text.primary",
+              backgroundColor: "background.paper",
+            }}
+          >
+            <MoreVertIcon />
+          </IconButton>
+        )}
       </Box>
 
       <CardActionArea

@@ -2,6 +2,7 @@ import { Box, CircularProgress } from "@mui/material";
 import { useEffect, useMemo, useState } from "react";
 import { ConfirmModal } from "../ConfirmModal";
 import { useAddItemToOrder } from "../../hooks/api/useAddItemToOrder";
+import { useCompleteOrder } from "../../hooks/api/useCompleteOrder";
 import { useCreateOrder } from "../../hooks/api/useCreateOrder";
 import { useDeleteOrder } from "../../hooks/api/useDeleteOrder";
 import { useDeleteOrderItem } from "../../hooks/api/useDeleteOrderItem";
@@ -9,8 +10,8 @@ import { useGetItems } from "../../hooks/api/useGetItems";
 import { useGetOrderItems } from "../../hooks/api/useGetOrderItems";
 import { useGetOrders } from "../../hooks/api/useGetOrders";
 import { useUpdateOrderItemQuantity } from "../../hooks/api/useUpdateOrderItemQuantity";
-import type { OrderStatus } from "../../hooks/api/useUpdateOrderStatus";
 import { useUpdateOrderStatus } from "../../hooks/api/useUpdateOrderStatus";
+import { getEffectiveOrderStatus } from "../../util/orderStatus";
 import { Menu } from "./Menu";
 import { OrderSidePanel } from "./OrderSidePanel";
 import { OrdersAccordion } from "./OrdersAccordion";
@@ -33,18 +34,19 @@ export const Home = () => {
   const deleteOrderItem = useDeleteOrderItem();
   const deleteOrder = useDeleteOrder();
   const updateOrderStatus = useUpdateOrderStatus();
+  const completeOrder = useCompleteOrder();
 
   const items = itemsResponse?.data ?? [];
   const orders = ordersResponse?.data ?? [];
   const orderItems = orderItemsResponse?.data ?? [];
 
   const activeOrders = useMemo(
-    () => orders.filter((order) => order.status !== "DELIVERED"),
+    () => orders.filter((order) => getEffectiveOrderStatus(order) !== "DELIVERED"),
     [orders],
   );
 
   const deliveredOrders = useMemo(
-    () => orders.filter((order) => order.status === "DELIVERED"),
+    () => orders.filter((order) => getEffectiveOrderStatus(order) === "DELIVERED"),
     [orders],
   );
 
@@ -144,7 +146,7 @@ export const Home = () => {
               name: order.name ?? "New Order",
               household: order.household ?? "General",
               expectedDeliveryDate: order.expectedDeliveryDate ?? "",
-              status: (order.status ?? "ORDERING") as OrderStatus,
+              status: getEffectiveOrderStatus(order),
             }))}
           selectedOrderId={selectedOrderId}
           onSelectOrder={(orderId) => {
@@ -157,7 +159,6 @@ export const Home = () => {
               household: "General",
               expectedDeliveryDate: getTodayDate(),
               notes: "",
-              status: "ORDERING",
             });
 
             setSelectedOrderId(newOrderId);
@@ -215,13 +216,12 @@ export const Home = () => {
           }))}
         itemLookup={itemLookup}
         totalItems={totalSelectedOrderItems}
-        canCompleteOrder={selectedActiveOrder?.status === "ORDERING"}
+        canCompleteOrder={
+          !!selectedActiveOrder && getEffectiveOrderStatus(selectedActiveOrder) === "ORDERING"
+        }
         onClose={() => setIsOrderPanelOpen(false)}
         onCompleteOrder={async (orderId) => {
-          await updateOrderStatus.mutateAsync({
-            id: orderId,
-            status: "ORDERED",
-          });
+          await completeOrder.mutateAsync({ id: orderId });
           setIsOrderPanelOpen(false);
         }}
         onDeleteOrder={async () => {

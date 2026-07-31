@@ -17,6 +17,7 @@ import { useMemo, useState } from "react";
 import { ConfirmModal } from "../ConfirmModal";
 import { useDeleteItem } from "../../hooks/api/useDeleteItem";
 import { useQueryClient } from "@tanstack/react-query";
+import { useAuthenticator } from "@aws-amplify/ui-react";
 import { MenuItemCard } from "./MenuItemCard";
 
 export type MenuItemRecord = {
@@ -35,6 +36,8 @@ export const Menu = ({
   onAddToOrder: (item: MenuItemRecord) => Promise<void>;
 }) => {
   const qc = useQueryClient();
+  const { authStatus } = useAuthenticator((context) => [context.authStatus]);
+  const canManageMenu = authStatus === "authenticated";
   const [openNewMenuItemModal, setOpenNewMenuItemModal] = useState(false);
   const [openUpdateMenuItemModal, setOpenUpdateMenuItemModal] = useState(false);
   const [openConfirmModal, setOpenConfirmModal] = useState(false);
@@ -79,14 +82,16 @@ export const Menu = ({
           expandIcon={<ExpandMoreIcon />}
         >
           <Typography variant="h2" sx={{ fontSize: { xs: "1.35rem", md: "3rem" } }}>Menu</Typography>
-          <IconButton
-            onClick={(event) => {
-              setOpenNewMenuItemModal(true);
-              event.stopPropagation();
-            }}
-          >
-            <AddCircleTwoToneIcon fontSize="large" />
-          </IconButton>
+          {canManageMenu && (
+            <IconButton
+              onClick={(event) => {
+                setOpenNewMenuItemModal(true);
+                event.stopPropagation();
+              }}
+            >
+              <AddCircleTwoToneIcon fontSize="large" />
+            </IconButton>
+          )}
         </AccordionSummary>
         <AccordionDetails>
           <Grid
@@ -103,6 +108,7 @@ export const Menu = ({
               <MenuItemCard
                 key={item.id}
                 item={item}
+                canManage={canManageMenu}
                 onAddToOrder={onAddToOrder}
                 onOpenItemMenu={(event, itemId) => {
                   setAnchorEl(event.currentTarget);

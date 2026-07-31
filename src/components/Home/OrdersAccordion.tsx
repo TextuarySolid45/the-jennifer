@@ -3,6 +3,7 @@ import {
   AccordionDetails,
   AccordionSummary,
   Box,
+  Chip,
   IconButton,
   MenuItem,
   Paper,
@@ -11,6 +12,7 @@ import {
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import AddCircleTwoToneIcon from "@mui/icons-material/AddCircleTwoTone";
+import { useAuthenticator } from "@aws-amplify/ui-react";
 import type { OrderStatus } from "../../hooks/api/useUpdateOrderStatus";
 
 const STATUS_OPTIONS: OrderStatus[] = [
@@ -43,6 +45,9 @@ export const OrdersAccordion = ({
   onCreateOrder: () => Promise<void>;
   onUpdateStatus: (orderId: string, status: OrderStatus) => Promise<void>;
 }) => {
+  const { authStatus } = useAuthenticator((context) => [context.authStatus]);
+  const canUpdateStatus = authStatus === "authenticated";
+
   return (
     <Accordion sx={{ width: "100%", mt: 2 }}>
       <AccordionSummary
@@ -96,23 +101,27 @@ export const OrdersAccordion = ({
                   <Typography variant="body2">Delivery: {order.expectedDeliveryDate}</Typography>
                 </Box>
 
-                <TextField
-                  label="Status"
-                  size="small"
-                  select
-                  value={(order.status ?? "ORDERING") as OrderStatus}
-                  onClick={(event) => event.stopPropagation()}
-                  onChange={async (event) => {
-                    await onUpdateStatus(order.id, event.target.value as OrderStatus);
-                  }}
-                  sx={{ minWidth: 180, backgroundColor: "#F6F1E8"}}
-                >
-                  {STATUS_OPTIONS.map((statusOption) => (
-                    <MenuItem key={statusOption} value={statusOption}>
-                      {statusOption}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                {canUpdateStatus ? (
+                  <TextField
+                    label="Status"
+                    size="small"
+                    select
+                    value={(order.status ?? "ORDERING") as OrderStatus}
+                    onClick={(event) => event.stopPropagation()}
+                    onChange={async (event) => {
+                      await onUpdateStatus(order.id, event.target.value as OrderStatus);
+                    }}
+                    sx={{ minWidth: 180, backgroundColor: "#F6F1E8"}}
+                  >
+                    {STATUS_OPTIONS.map((statusOption) => (
+                      <MenuItem key={statusOption} value={statusOption}>
+                        {statusOption}
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                ) : (
+                  <Chip label={order.status ?? "ORDERING"} sx={{ alignSelf: "flex-start" }} />
+                )}
               </Box>
             </Paper>
           );

@@ -8,3 +8,10 @@ export const backend = defineBackend({
   data,
   storage,
 });
+
+// Only your aunt's account should ever hold an authenticated session (it grants
+// order-status and menu-management rights), so public self sign-up is disabled.
+// Create her user via the Cognito console or `aws cognito-idp admin-create-user`.
+backend.auth.resources.cfnResources.cfnUserPool.adminCreateUserConfig = {
+  allowAdminCreateUserOnly: true,
+};
