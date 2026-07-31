@@ -40,15 +40,28 @@ export const Header = () => {
         >
           {isAuthenticated ? (
             <>
-              <Typography variant="body2" sx={{ display: { xs: "none", md: "block" } }}>
+              <Typography
+                variant="body2"
+                sx={{ display: { xs: "none", md: "block" }, color: "secondary.main" }}
+              >
                 {user?.signInDetails?.loginId}
               </Typography>
-              <Button color="inherit" variant="outlined" size="small" onClick={() => signOut()}>
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={() => signOut()}
+                sx={{ color: "secondary.main", borderColor: "secondary.main" }}
+              >
                 Sign Out
               </Button>
             </>
           ) : (
-            <Button color="inherit" variant="outlined" size="small" onClick={() => setSignInOpen(true)}>
+            <Button
+              variant="outlined"
+              size="small"
+              onClick={() => setSignInOpen(true)}
+              sx={{ color: "secondary.main", borderColor: "secondary.main" }}
+            >
               Sign In
             </Button>
           )}
