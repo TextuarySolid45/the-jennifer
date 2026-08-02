@@ -5,7 +5,7 @@ const schema = a.schema({
     .model({
       visits: a.date().array(),
     })
-    .authorization((allow) => [allow.authenticated()]),
+    .authorization((allow) => [allow.authenticated("identityPool")]),
   Item: a
     .model({
       name: a.string().required(),
@@ -15,7 +15,7 @@ const schema = a.schema({
     })
     .authorization((allow) => [
       allow.guest().to(["read"]),
-      allow.authenticated().to(["create", "read", "update", "delete"]),
+      allow.authenticated("identityPool").to(["create", "read", "update", "delete"]),
     ]),
   OrderItem: a
     .model({
@@ -27,7 +27,7 @@ const schema = a.schema({
     })
     .authorization((allow) => [
       allow.guest().to(["create", "read", "update", "delete"]),
-      allow.authenticated().to(["create", "read", "update", "delete"]),
+      allow.authenticated("identityPool").to(["create", "read", "update", "delete"]),
     ]),
   Order: a
     .model({
@@ -42,18 +42,18 @@ const schema = a.schema({
         .string()
         .authorization((allow) => [
           allow.guest().to(["read", "update"]),
-          allow.authenticated().to(["read", "update"]),
+          allow.authenticated("identityPool").to(["read", "update"]),
         ]),
       status: a
         .string()
         .authorization((allow) => [
           allow.guest().to(["read"]),
-          allow.authenticated().to(["create", "read", "update"]),
+          allow.authenticated("identityPool").to(["create", "read", "update"]),
         ]),
     })
     .authorization((allow) => [
       allow.guest().to(["create", "read", "update", "delete"]),
-      allow.authenticated().to(["create", "read", "update", "delete"]),
+      allow.authenticated("identityPool").to(["create", "read", "update", "delete"]),
     ]),
 });
 
