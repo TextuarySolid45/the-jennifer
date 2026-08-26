@@ -99,27 +99,19 @@ export const Menu = ({
           )}
         </AccordionSummary>
         <AccordionDetails>
-          <Grid
-            size={12}
-            container
-            spacing={2}
-            sx={{
-              display: "flex",
-              justifyContent: "start",
-              alignItems: "center",
-            }}
-          >
+          <Grid container spacing={2.5} size={12}>
             {items.map((item) => (
-              <MenuItemCard
-                key={item.id}
-                item={item}
-                canManage={canManageMenu}
-                onAddToOrder={onAddToOrder}
-                onOpenItemMenu={(event, itemId) => {
-                  setAnchorEl(event.currentTarget);
-                  setSelectedItemId(itemId);
-                }}
-              />
+              <Grid key={item.id} size={{ xs: 12, sm: 6, md: 4 }}>
+                <MenuItemCard
+                  item={item}
+                  canManage={canManageMenu}
+                  onAddToOrder={onAddToOrder}
+                  onOpenItemMenu={(event, itemId) => {
+                    setAnchorEl(event.currentTarget);
+                    setSelectedItemId(itemId);
+                  }}
+                />
+              </Grid>
             ))}
 
             <MuiMenu

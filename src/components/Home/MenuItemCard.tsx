@@ -8,7 +8,9 @@ import {
   Typography,
 } from "@mui/material";
 import MoreVertIcon from "@mui/icons-material/MoreVert";
+import BakeryDiningTwoToneIcon from "@mui/icons-material/BakeryDiningTwoTone";
 import { StorageImage } from "@aws-amplify/ui-react-storage";
+import { useState } from "react";
 import type { MenuItemRecord } from "./Menu";
 
 export const MenuItemCard = ({
@@ -22,6 +24,8 @@ export const MenuItemCard = ({
   onAddToOrder: (item: MenuItemRecord) => Promise<void>;
   onOpenItemMenu: (event: React.MouseEvent<HTMLElement>, itemId: string) => void;
 }) => {
+  const [imageUnavailable, setImageUnavailable] = useState(false);
+
   return (
     <Card
       sx={{
@@ -29,7 +33,7 @@ export const MenuItemCard = ({
         flexDirection: "column",
         alignItems: "center",
         height: "360px",
-        width: "350px",
+        width: "100%",
         overflow: "hidden",
       }}
       key={item.id}
@@ -90,6 +94,7 @@ export const MenuItemCard = ({
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
+            backgroundColor: "background.paper",
             "& img": {
               maxHeight: "100%",
               maxWidth: "100%",
@@ -97,7 +102,22 @@ export const MenuItemCard = ({
             },
           }}
         >
-          <StorageImage alt={item.name as string} path={`items/${item.id}/image.jpg`} />
+          {imageUnavailable ? (
+            <Box
+              role="img"
+              aria-label={`${item.name} placeholder`}
+              sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+            >
+              <BakeryDiningTwoToneIcon sx={{ fontSize: 56, color: "primary.light" }} />
+            </Box>
+          ) : (
+            <StorageImage
+              alt={item.name as string}
+              path={`items/${item.id}/image.jpg`}
+              validateObjectExistence
+              onGetUrlError={() => setImageUnavailable(true)}
+            />
+          )}
         </CardMedia>
         <CardContent
           sx={{

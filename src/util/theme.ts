@@ -50,28 +50,40 @@ export const themeOptions: ThemeOptions = {
     borderRadius: 18,
   },
   typography: {
-    fontFamily: '"Poppins", "Inter", sans-serif',
+    fontFamily: '"Inter", sans-serif',
     h1: {
-      fontWeight: 700,
+      fontFamily: '"Fraunces", serif',
+      fontWeight: 600,
+      letterSpacing: "-0.01em",
       color: "#5F7050",
     },
     h2: {
-      fontWeight: 700,
+      fontFamily: '"Fraunces", serif',
+      fontWeight: 600,
+      letterSpacing: "-0.01em",
       color: "#5F7050",
     },
     h3: {
+      fontFamily: '"Fraunces", serif',
       fontWeight: 600,
       color: "#5F7050",
     },
     h4: {
+      fontFamily: '"Fraunces", serif',
       fontWeight: 600,
       color: "#5F7050",
     },
     h5: {
+      fontFamily: '"Fraunces", serif',
       fontWeight: 600,
     },
     h6: {
+      fontFamily: '"Fraunces", serif',
       fontWeight: 600,
+    },
+    subtitle1: {
+      color: "#8A7666",
+      letterSpacing: "0.04em",
     },
     body1: {
       color: "#56463A",
@@ -129,6 +141,36 @@ export const themeOptions: ThemeOptions = {
           backgroundColor: "#5F7050",
           color: "#FFFFFF",
           boxShadow: "none",
+        },
+      },
+    },
+    MuiAccordion: {
+      styleOverrides: {
+        root: {
+          border: "1px solid #EEE7DA",
+          boxShadow: "0px 6px 24px rgba(95,112,80,0.06)",
+          "&:before": {
+            display: "none",
+          },
+          "&.Mui-expanded": {
+            margin: 0,
+          },
+        },
+      },
+    },
+    MuiAccordionSummary: {
+      styleOverrides: {
+        root: {
+          minHeight: 72,
+          paddingLeft: 24,
+          paddingRight: 24,
+        },
+      },
+    },
+    MuiAccordionDetails: {
+      styleOverrides: {
+        root: {
+          padding: "8px 24px 24px",
         },
       },
     },
