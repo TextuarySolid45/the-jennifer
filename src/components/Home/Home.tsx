@@ -9,6 +9,8 @@ import { useDeleteOrderItem } from "../../hooks/api/useDeleteOrderItem";
 import { useGetItems } from "../../hooks/api/useGetItems";
 import { useGetOrderItems } from "../../hooks/api/useGetOrderItems";
 import { useGetOrders } from "../../hooks/api/useGetOrders";
+import { useGetVisits } from "../../hooks/api/useGetVisits";
+import { useUpdateOrder } from "../../hooks/api/useUpdateOrder";
 import { useUpdateOrderItemQuantity } from "../../hooks/api/useUpdateOrderItemQuantity";
 import { useUpdateOrderStatus } from "../../hooks/api/useUpdateOrderStatus";
 import { getEffectiveOrderStatus } from "../../util/orderStatus";
@@ -16,6 +18,12 @@ import { Menu } from "./Menu";
 import { OrderSidePanel } from "./OrderSidePanel";
 import { OrdersAccordion } from "./OrdersAccordion";
 import { PastOrdersAccordion } from "./PastOrdersAccordion";
+import { Visits } from "./Visits";
+
+const formatVisitLabel = (visit: { startDate: string; endDate: string; label: string | null }) => {
+  const dates = visit.startDate === visit.endDate ? visit.startDate : `${visit.startDate} – ${visit.endDate}`;
+  return visit.label ? `${visit.label} (${dates})` : dates;
+};
 
 const getTodayDate = () => new Date().toISOString().slice(0, 10);
 
@@ -27,6 +35,7 @@ export const Home = () => {
   const { data: itemsResponse, isLoading: isItemsLoading } = useGetItems();
   const { data: ordersResponse, isLoading: isOrdersLoading } = useGetOrders();
   const { data: orderItemsResponse, isLoading: isOrderItemsLoading } = useGetOrderItems();
+  const { data: visitsResponse } = useGetVisits();
 
   const createOrder = useCreateOrder();
   const addItemToOrder = useAddItemToOrder();
@@ -35,10 +44,27 @@ export const Home = () => {
   const deleteOrder = useDeleteOrder();
   const updateOrderStatus = useUpdateOrderStatus();
   const completeOrder = useCompleteOrder();
+  const updateOrder = useUpdateOrder();
 
   const items = itemsResponse?.data ?? [];
   const orders = ordersResponse?.data ?? [];
   const orderItems = orderItemsResponse?.data ?? [];
+  const visits = visitsResponse?.data ?? [];
+
+  const visitOptions = useMemo(
+    () =>
+      visits
+        .filter((visit) => Boolean(visit.id))
+        .map((visit) => ({
+          id: visit.id,
+          label: formatVisitLabel({
+            startDate: visit.startDate ?? "",
+            endDate: visit.endDate ?? "",
+            label: visit.label ?? null,
+          }),
+        })),
+    [visits],
+  );
 
   const activeOrders = useMemo(
     () => orders.filter((order) => getEffectiveOrderStatus(order) !== "DELIVERED"),
@@ -94,6 +120,10 @@ export const Home = () => {
     0,
   );
 
+  // Visits is intentionally excluded here: it's supplementary (the Menu/Orders/Past
+  // Orders sections don't depend on it), so a slow or failing visits fetch shouldn't
+  // block the whole page behind a spinner. It degrades gracefully to an empty list
+  // (see `visits` above) until it resolves.
   if (isItemsLoading || isOrdersLoading || isOrderItemsLoading) {
     return <CircularProgress />;
   }
@@ -147,7 +177,9 @@ export const Home = () => {
               household: order.household ?? "General",
               expectedDeliveryDate: order.expectedDeliveryDate ?? "",
               status: getEffectiveOrderStatus(order),
+              visitId: order.visitId ?? null,
             }))}
+          visitOptions={visitOptions}
           selectedOrderId={selectedOrderId}
           onSelectOrder={(orderId) => {
             setSelectedOrderId(orderId);
@@ -167,6 +199,20 @@ export const Home = () => {
           onUpdateStatus={async (orderId, status) => {
             await updateOrderStatus.mutateAsync({ id: orderId, status });
           }}
+          onAssignVisit={async (orderId, visitId) => {
+            await updateOrder.mutateAsync({ id: orderId, visitId });
+          }}
+        />
+
+        <Visits
+          visits={visits
+            .filter((visit) => Boolean(visit.id))
+            .map((visit) => ({
+              id: visit.id,
+              startDate: visit.startDate ?? "",
+              endDate: visit.endDate ?? "",
+              label: visit.label ?? null,
+            }))}
         />
 
         <PastOrdersAccordion
@@ -177,7 +223,9 @@ export const Home = () => {
               name: order.name ?? "Order",
               household: order.household ?? "General",
               expectedDeliveryDate: order.expectedDeliveryDate ?? "",
+              visitId: order.visitId ?? null,
             }))}
+          visitOptions={visitOptions}
         />
       </Box>
 
@@ -219,6 +267,9 @@ export const Home = () => {
         canCompleteOrder={
           !!selectedActiveOrder && getEffectiveOrderStatus(selectedActiveOrder) === "ORDERING"
         }
+        onUpdateName={async (orderId, name) => {
+          await updateOrder.mutateAsync({ id: orderId, name });
+        }}
         onClose={() => setIsOrderPanelOpen(false)}
         onCompleteOrder={async (orderId) => {
           await completeOrder.mutateAsync({ id: orderId });

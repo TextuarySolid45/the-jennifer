@@ -30,23 +30,34 @@ export type ActiveOrderRecord = {
   household: string;
   expectedDeliveryDate: string;
   status: OrderStatus | null;
+  visitId: string | null;
+};
+
+export type VisitOption = {
+  id: string;
+  label: string;
 };
 
 export const OrdersAccordion = ({
   activeOrders,
+  visitOptions,
   selectedOrderId,
   onSelectOrder,
   onCreateOrder,
   onUpdateStatus,
+  onAssignVisit,
 }: {
   activeOrders: ActiveOrderRecord[];
+  visitOptions: VisitOption[];
   selectedOrderId: string | null;
   onSelectOrder: (orderId: string) => void;
   onCreateOrder: () => Promise<void>;
   onUpdateStatus: (orderId: string, status: OrderStatus) => Promise<void>;
+  onAssignVisit: (orderId: string, visitId: string | null) => Promise<void>;
 }) => {
   const { authStatus } = useAuthenticator((context) => [context.authStatus]);
   const canUpdateStatus = authStatus === "authenticated";
+  const visitLookup = new Map(visitOptions.map((visit) => [visit.id, visit.label]));
 
   return (
     <Accordion sx={{ width: "100%", mt: 2 }}>
@@ -67,6 +78,9 @@ export const OrdersAccordion = ({
 
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <IconButton
+            // See Menu.tsx's matching comment: avoids an invalid <button> nested
+            // inside AccordionSummary's own <button>.
+            component="span"
             onClick={async (event) => {
               event.stopPropagation();
               await onCreateOrder();
@@ -99,6 +113,36 @@ export const OrdersAccordion = ({
                   <Typography variant="h6">{order.name}</Typography>
                   <Typography variant="body2">Household: {order.household}</Typography>
                   <Typography variant="body2">Delivery: {order.expectedDeliveryDate}</Typography>
+
+                  {canUpdateStatus ? (
+                    <TextField
+                      label="Visit"
+                      size="small"
+                      select
+                      value={order.visitId ?? ""}
+                      onClick={(event) => event.stopPropagation()}
+                      onChange={async (event) => {
+                        await onAssignVisit(order.id, event.target.value || null);
+                      }}
+                      sx={{ minWidth: 180, mt: 1, backgroundColor: "#F6F1E8" }}
+                    >
+                      <MenuItem value="">Unassigned</MenuItem>
+                      {visitOptions.map((visit) => (
+                        <MenuItem key={visit.id} value={visit.id}>
+                          {visit.label}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  ) : (
+                    order.visitId &&
+                    visitLookup.has(order.visitId) && (
+                      <Chip
+                        size="small"
+                        sx={{ mt: 1 }}
+                        label={`Visit: ${visitLookup.get(order.visitId)}`}
+                      />
+                    )
+                  )}
                 </Box>
 
                 {canUpdateStatus ? (

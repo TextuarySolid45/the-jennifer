@@ -1,11 +1,17 @@
 import { a, defineData, type ClientSchema } from "@aws-amplify/backend";
 
 const schema = a.schema({
-  Chef: a
+  Visit: a
     .model({
-      visits: a.date().array(),
+      startDate: a.date().required(),
+      endDate: a.date().required(),
+      label: a.string(),
+      orders: a.hasMany("Order", "visitId"),
     })
-    .authorization((allow) => [allow.authenticated("identityPool")]),
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated("identityPool").to(["create", "read", "update", "delete"]),
+    ]),
   Item: a
     .model({
       name: a.string().required(),
@@ -36,6 +42,16 @@ const schema = a.schema({
       household: a.string().required(),
       expectedDeliveryDate: a.date().required(),
       notes: a.string().required().default(""),
+      // Which of the aunt's visits this order is being fulfilled on. Guests can see
+      // it (so they know which trip their order is attached to) but only the aunt
+      // assigns/changes it — same pattern as `status` below.
+      visitId: a
+        .id()
+        .authorization((allow) => [
+          allow.guest().to(["read"]),
+          allow.authenticated("identityPool").to(["create", "read", "update"]),
+        ]),
+      visit: a.belongsTo("Visit", "visitId"),
       // Guests may only flip this timestamp to submit their own order (ORDERING -> ORDERED);
       // everything past that is driven by `status`, which guests can read but never write.
       submittedAt: a

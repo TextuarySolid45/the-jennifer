@@ -6,9 +6,23 @@ export type PastOrderRecord = {
   name: string;
   household: string;
   expectedDeliveryDate: string;
+  visitId: string | null;
 };
 
-export const PastOrdersAccordion = ({ deliveredOrders }: { deliveredOrders: PastOrderRecord[] }) => {
+export type PastVisitOption = {
+  id: string;
+  label: string;
+};
+
+export const PastOrdersAccordion = ({
+  deliveredOrders,
+  visitOptions,
+}: {
+  deliveredOrders: PastOrderRecord[];
+  visitOptions: PastVisitOption[];
+}) => {
+  const visitLookup = new Map(visitOptions.map((visit) => [visit.id, visit.label]));
+
   return (
     <Accordion sx={{ width: "100%", mt: 2 }}>
       <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -24,6 +38,9 @@ export const PastOrdersAccordion = ({ deliveredOrders }: { deliveredOrders: Past
                 <Typography variant="h6">{order.name}</Typography>
                 <Typography variant="body2">Household: {order.household}</Typography>
                 <Typography variant="body2">Delivery: {order.expectedDeliveryDate}</Typography>
+                {order.visitId && visitLookup.has(order.visitId) && (
+                  <Chip size="small" sx={{ mt: 0.5 }} label={`Visit: ${visitLookup.get(order.visitId)}`} />
+                )}
               </Box>
               <Chip label="DELIVERED" color="success" />
             </Box>

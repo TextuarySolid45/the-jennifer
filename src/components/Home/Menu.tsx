@@ -84,6 +84,11 @@ export const Menu = ({
           <Typography variant="h2" sx={{ fontSize: { xs: "1.35rem", md: "3rem" } }}>Menu</Typography>
           {canManageMenu && (
             <IconButton
+              // AccordionSummary renders as a <button>; rendering this as a <button> too
+              // is invalid HTML (browser silently closes the outer button early, which
+              // breaks React's assumed DOM structure). `component="span"` keeps the
+              // click/keyboard/ripple behavior without the invalid nesting.
+              component="span"
               onClick={(event) => {
                 setOpenNewMenuItemModal(true);
                 event.stopPropagation();

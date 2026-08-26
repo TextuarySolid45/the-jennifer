@@ -8,6 +8,7 @@ import {
   ListItem,
   ListItemText,
   Paper,
+  TextField,
   Tooltip,
   Typography,
 } from "@mui/material";
@@ -15,6 +16,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useState } from "react";
 
 const ORDER_PANEL_WIDTH = 380;
 
@@ -42,6 +44,7 @@ export const OrderSidePanel = ({
   onIncrease,
   onDecrease,
   onRemove,
+  onUpdateName,
 }: {
   isOpen: boolean;
   order: {
@@ -59,10 +62,73 @@ export const OrderSidePanel = ({
   onIncrease: (orderItemId: string, quantity: number) => Promise<void>;
   onDecrease: (orderItemId: string, quantity: number) => Promise<void>;
   onRemove: (orderItemId: string) => Promise<void>;
+  onUpdateName: (orderId: string, name: string) => Promise<void>;
 }) => {
   if (!order || !isOpen) {
     return null;
   }
+
+  return (
+    // Keyed by order id so the name-draft state below resets when the
+    // selected order changes, instead of syncing it via a useEffect.
+    <OrderSidePanelContent
+      key={order.id}
+      order={order}
+      orderItems={orderItems}
+      itemLookup={itemLookup}
+      totalItems={totalItems}
+      canCompleteOrder={canCompleteOrder}
+      onClose={onClose}
+      onCompleteOrder={onCompleteOrder}
+      onDeleteOrder={onDeleteOrder}
+      onIncrease={onIncrease}
+      onDecrease={onDecrease}
+      onRemove={onRemove}
+      onUpdateName={onUpdateName}
+    />
+  );
+};
+
+const OrderSidePanelContent = ({
+  order,
+  orderItems,
+  itemLookup,
+  totalItems,
+  canCompleteOrder,
+  onClose,
+  onCompleteOrder,
+  onDeleteOrder,
+  onIncrease,
+  onDecrease,
+  onRemove,
+  onUpdateName,
+}: {
+  order: {
+    id: string;
+    name: string;
+    household: string;
+  };
+  orderItems: OrderSidePanelItem[];
+  itemLookup: Map<string, ItemLookupRecord>;
+  totalItems: number;
+  canCompleteOrder: boolean;
+  onClose: () => void;
+  onCompleteOrder: (orderId: string) => Promise<void>;
+  onDeleteOrder: (orderId: string) => Promise<void>;
+  onIncrease: (orderItemId: string, quantity: number) => Promise<void>;
+  onDecrease: (orderItemId: string, quantity: number) => Promise<void>;
+  onRemove: (orderItemId: string) => Promise<void>;
+  onUpdateName: (orderId: string, name: string) => Promise<void>;
+}) => {
+  const [nameDraft, setNameDraft] = useState(order.name === "New Order" ? "" : order.name);
+
+  const commitName = async () => {
+    const trimmed = nameDraft.trim();
+
+    if (trimmed && trimmed !== order.name) {
+      await onUpdateName(order.id, trimmed);
+    }
+  };
 
   return (
     <Paper
@@ -125,6 +191,17 @@ export const OrderSidePanel = ({
         </Box>
       </Box>
 
+      <TextField
+        label="Your name"
+        placeholder="Who's this order for?"
+        size="small"
+        fullWidth
+        value={nameDraft}
+        onChange={(event) => setNameDraft(event.target.value)}
+        onBlur={commitName}
+        sx={{ mb: 1.5 }}
+      />
+
       <Box
         sx={{
           mb: 1.5,
@@ -141,16 +218,21 @@ export const OrderSidePanel = ({
           sx={{ display: "inline-flex", flexShrink: 0 }}
         />
 
-        <Button
-          variant="contained"
-          size="small"
-          onClick={async () => {
-            await onCompleteOrder(order.id);
-          }}
-          disabled={!canCompleteOrder}
-        >
-          Complete
-        </Button>
+        <Tooltip title={canCompleteOrder ? "" : "Add your name before completing the order"}>
+          <span>
+            <Button
+              variant="contained"
+              size="small"
+              onClick={async () => {
+                await commitName();
+                await onCompleteOrder(order.id);
+              }}
+              disabled={!canCompleteOrder || !nameDraft.trim()}
+            >
+              Complete
+            </Button>
+          </span>
+        </Tooltip>
       </Box>
 
       <Divider sx={{ mb: { xs: 1, md: 2 } }} />

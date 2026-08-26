@@ -11,8 +11,10 @@ const state = vi.hoisted(() => ({
     household: string;
     expectedDeliveryDate: string;
     status: "ORDERING" | "ORDERED" | "PREPARING" | "READY" | "DELIVERING" | "DELIVERED";
+    visitId: string | null;
   }>,
   orderItems: [] as Array<{ id: string; orderId: string; itemId: string; quantity: number }>,
+  visits: [] as Array<{ id: string; startDate: string; endDate: string; label: string | null }>,
 }));
 
 const mocks = vi.hoisted(() => ({
@@ -23,6 +25,7 @@ const mocks = vi.hoisted(() => ({
   updateOrderItemQuantityMutateAsync: vi.fn(),
   deleteOrderItemMutateAsync: vi.fn(),
   deleteOrderMutateAsync: vi.fn(),
+  updateOrderMutateAsync: vi.fn(),
 }));
 
 vi.mock("../../../hooks/api/useGetItems", () => ({
@@ -63,6 +66,14 @@ vi.mock("../../../hooks/api/useDeleteOrderItem", () => ({
 
 vi.mock("../../../hooks/api/useDeleteOrder", () => ({
   useDeleteOrder: () => ({ mutateAsync: mocks.deleteOrderMutateAsync }),
+}));
+
+vi.mock("../../../hooks/api/useUpdateOrder", () => ({
+  useUpdateOrder: () => ({ mutateAsync: mocks.updateOrderMutateAsync }),
+}));
+
+vi.mock("../../../hooks/api/useGetVisits", () => ({
+  useGetVisits: () => ({ data: { data: state.visits }, isLoading: false }),
 }));
 
 vi.mock("../Menu", () => ({
@@ -181,6 +192,14 @@ vi.mock("../PastOrdersAccordion", () => ({
   ),
 }));
 
+vi.mock("../Visits", () => ({
+  Visits: ({ visits }: { visits: Array<{ id: string }> }) => (
+    <section>
+      <h2>Visits Mock ({visits.length})</h2>
+    </section>
+  ),
+}));
+
 describe("Home flows", () => {
   beforeEach(() => {
     state.items = [
@@ -195,10 +214,12 @@ describe("Home flows", () => {
         household: "General",
         expectedDeliveryDate: "2026-07-22",
         status: "ORDERING",
+        visitId: null,
       },
     ];
 
     state.orderItems = [];
+    state.visits = [];
 
     vi.clearAllMocks();
 
@@ -212,6 +233,7 @@ describe("Home flows", () => {
           household: "General",
           expectedDeliveryDate: "2026-07-22",
           status: "ORDERING",
+          visitId: null,
         },
       ];
       return id;
@@ -235,6 +257,7 @@ describe("Home flows", () => {
     mocks.updateOrderItemQuantityMutateAsync.mockResolvedValue(undefined);
     mocks.deleteOrderItemMutateAsync.mockResolvedValue(undefined);
     mocks.deleteOrderMutateAsync.mockResolvedValue(undefined);
+    mocks.updateOrderMutateAsync.mockResolvedValue(undefined);
   });
 
   it("shows the list of menu items", () => {
