@@ -4,6 +4,7 @@ import {
   CardActionArea,
   CardContent,
   CardMedia,
+  Chip,
   IconButton,
   Typography,
 } from "@mui/material";
@@ -21,10 +22,63 @@ export const MenuItemCard = ({
 }: {
   item: MenuItemRecord;
   canManage: boolean;
-  onAddToOrder: (item: MenuItemRecord) => Promise<void>;
+  onAddToOrder: (item: MenuItemRecord, flavorId?: string) => Promise<void>;
   onOpenItemMenu: (event: React.MouseEvent<HTMLElement>, itemId: string) => void;
 }) => {
   const [imageUnavailable, setImageUnavailable] = useState(false);
+
+  const hasFlavors = item.flavors.length > 0;
+  const availableFlavors = item.flavors.filter((flavor) => flavor.available);
+  // An item with flavors defined is never orderable with no flavor selected —
+  // it shows as unavailable rather than silently falling back to a one-tap add.
+  const isUnorderable = hasFlavors && availableFlavors.length === 0;
+
+  const media = (
+    <CardMedia
+      sx={{
+        width: "100%",
+        height: 140,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        backgroundColor: "background.paper",
+        "& img": {
+          maxHeight: "100%",
+          maxWidth: "100%",
+          objectFit: "contain",
+        },
+      }}
+    >
+      {imageUnavailable ? (
+        <Box
+          role="img"
+          aria-label={`${item.name} placeholder`}
+          sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
+        >
+          <BakeryDiningTwoToneIcon sx={{ fontSize: 56, color: "primary.light" }} />
+        </Box>
+      ) : (
+        <StorageImage
+          alt={item.name as string}
+          path={`items/${item.id}/image.jpg`}
+          validateObjectExistence
+          onGetUrlError={() => setImageUnavailable(true)}
+        />
+      )}
+    </CardMedia>
+  );
+
+  const content = (
+    <CardContent
+      sx={{
+        overflow: "scroll",
+        maxHeight: hasFlavors ? "160px" : "200px",
+        minHeight: hasFlavors ? "160px" : "200px",
+      }}
+    >
+      <Typography variant="body2">{item.description}</Typography>
+    </CardContent>
+  );
 
   return (
     <Card
@@ -81,54 +135,47 @@ export const MenuItemCard = ({
         )}
       </Box>
 
-      <CardActionArea
-        onClick={async () => {
-          await onAddToOrder(item);
-        }}
-        sx={{ width: "100%", height: "calc(100% - 56px)" }}
-      >
-        <CardMedia
+      {hasFlavors ? (
+        <Box
           sx={{
             width: "100%",
-            height: 140,
+            height: "calc(100% - 56px)",
             display: "flex",
-            alignItems: "center",
-            justifyContent: "center",
-            backgroundColor: "background.paper",
-            "& img": {
-              maxHeight: "100%",
-              maxWidth: "100%",
-              objectFit: "contain",
-            },
+            flexDirection: "column",
           }}
         >
-          {imageUnavailable ? (
-            <Box
-              role="img"
-              aria-label={`${item.name} placeholder`}
-              sx={{ display: "flex", alignItems: "center", justifyContent: "center" }}
-            >
-              <BakeryDiningTwoToneIcon sx={{ fontSize: 56, color: "primary.light" }} />
-            </Box>
-          ) : (
-            <StorageImage
-              alt={item.name as string}
-              path={`items/${item.id}/image.jpg`}
-              validateObjectExistence
-              onGetUrlError={() => setImageUnavailable(true)}
-            />
-          )}
-        </CardMedia>
-        <CardContent
-          sx={{
-            overflow: "scroll",
-            maxHeight: "200px",
-            minHeight: "200px",
+          {media}
+          {content}
+          <Box sx={{ px: 1.5, pb: 1.5, pt: 0.5, display: "flex", flexWrap: "wrap", gap: 0.75 }}>
+            {isUnorderable ? (
+              <Chip label="Currently unavailable" disabled sx={{ width: "100%" }} />
+            ) : (
+              availableFlavors.map((flavor) => (
+                <Chip
+                  key={flavor.id}
+                  label={flavor.name}
+                  clickable
+                  color="primary"
+                  variant="outlined"
+                  onClick={async () => {
+                    await onAddToOrder(item, flavor.id);
+                  }}
+                />
+              ))
+            )}
+          </Box>
+        </Box>
+      ) : (
+        <CardActionArea
+          onClick={async () => {
+            await onAddToOrder(item);
           }}
+          sx={{ width: "100%", height: "calc(100% - 56px)" }}
         >
-          <Typography variant="body2">{item.description}</Typography>
-        </CardContent>
-      </CardActionArea>
+          {media}
+          {content}
+        </CardActionArea>
+      )}
     </Card>
   );
 };

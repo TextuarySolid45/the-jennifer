@@ -8,7 +8,7 @@ export const useGetOrderItems = () => {
     queryKey: ["orderItems"],
     queryFn: async () => {
       const orderItems = await client.models.OrderItem.list({
-        selectionSet: ["id", "orderId", "itemId", "quantity", "createdAt", "updatedAt"],
+        selectionSet: ["id", "orderId", "itemId", "flavorId", "quantity", "createdAt", "updatedAt"],
       });
 
       return orderItems;

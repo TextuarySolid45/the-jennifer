@@ -6,6 +6,7 @@ import { useCompleteOrder } from "../../hooks/api/useCompleteOrder";
 import { useCreateOrder } from "../../hooks/api/useCreateOrder";
 import { useDeleteOrder } from "../../hooks/api/useDeleteOrder";
 import { useDeleteOrderItem } from "../../hooks/api/useDeleteOrderItem";
+import { useGetFlavors } from "../../hooks/api/useGetFlavors";
 import { useGetItems } from "../../hooks/api/useGetItems";
 import { useGetOrderItems } from "../../hooks/api/useGetOrderItems";
 import { useGetOrders } from "../../hooks/api/useGetOrders";
@@ -36,6 +37,7 @@ export const Home = () => {
   const { data: ordersResponse, isLoading: isOrdersLoading } = useGetOrders();
   const { data: orderItemsResponse, isLoading: isOrderItemsLoading } = useGetOrderItems();
   const { data: visitsResponse } = useGetVisits();
+  const { data: flavorsResponse } = useGetFlavors();
 
   const createOrder = useCreateOrder();
   const addItemToOrder = useAddItemToOrder();
@@ -50,6 +52,36 @@ export const Home = () => {
   const orders = ordersResponse?.data ?? [];
   const orderItems = orderItemsResponse?.data ?? [];
   const visits = visitsResponse?.data ?? [];
+  const flavors = flavorsResponse?.data ?? [];
+
+  // Grouped with all flavors (available and not) — MenuItemCard filters to available-only
+  // for the guest-facing chip picker, while UpdateMenuItemModal needs the full list so the
+  // aunt can re-enable a flavor she previously toggled off.
+  const flavorsByItemId = useMemo(() => {
+    const map = new Map<string, { id: string; name: string; available: boolean }[]>();
+
+    [...flavors]
+      .filter((flavor) => Boolean(flavor.id) && Boolean(flavor.itemId))
+      .sort((a, b) => (a.createdAt ?? "").localeCompare(b.createdAt ?? ""))
+      .forEach((flavor) => {
+        const itemId = flavor.itemId as string;
+        const list = map.get(itemId) ?? [];
+        list.push({ id: flavor.id, name: flavor.name ?? "", available: flavor.available ?? true });
+        map.set(itemId, list);
+      });
+
+    return map;
+  }, [flavors]);
+
+  const flavorLookup = useMemo(
+    () =>
+      new Map(
+        flavors
+          .filter((flavor) => Boolean(flavor.id))
+          .map((flavor) => [flavor.id, { id: flavor.id, name: flavor.name ?? "" }]),
+      ),
+    [flavors],
+  );
 
   const visitOptions = useMemo(
     () =>
@@ -148,14 +180,16 @@ export const Home = () => {
               id: item.id,
               name: item.name ?? "",
               description: item.description ?? "",
+              flavors: flavorsByItemId.get(item.id) ?? [],
             }))}
           isItemsLoading={isItemsLoading}
-          onAddToOrder={async (item) => {
+          onAddToOrder={async (item, flavorId) => {
             const hasActiveSelectedOrder =
               !!selectedOrderId && activeOrders.some((order) => order.id === selectedOrderId);
 
             const targetOrderId = await addItemToOrder.mutateAsync({
               itemId: item.id,
+              flavorId,
               orderId: hasActiveSelectedOrder ? selectedOrderId : null,
             });
 
@@ -260,9 +294,11 @@ export const Home = () => {
           .map((orderItem) => ({
             id: orderItem.id,
             itemId: orderItem.itemId,
+            flavorId: orderItem.flavorId ?? null,
             quantity: orderItem.quantity,
           }))}
         itemLookup={itemLookup}
+        flavorLookup={flavorLookup}
         totalItems={totalSelectedOrderItems}
         canCompleteOrder={
           !!selectedActiveOrder && getEffectiveOrderStatus(selectedActiveOrder) === "ORDERING"

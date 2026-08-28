@@ -18,6 +18,22 @@ const schema = a.schema({
       description: a.string().required(),
       deletedAt: a.string(),
       orderItems: a.hasMany("OrderItem", "itemId"),
+      flavors: a.hasMany("Flavor", "itemId"),
+    })
+    .authorization((allow) => [
+      allow.guest().to(["read"]),
+      allow.authenticated("identityPool").to(["create", "read", "update", "delete"]),
+    ]),
+  // A named variant of an Item (e.g. "Garlic" on a bagel). `available` is a soft-delete
+  // toggle, not a row-value auth condition — Amplify Gen2 can't gate read by a field's own
+  // value, so guests hiding unavailable flavors happens client-side (filter in the UI), not here.
+  Flavor: a
+    .model({
+      name: a.string().required(),
+      available: a.boolean().required().default(true),
+      itemId: a.id(),
+      item: a.belongsTo("Item", "itemId"),
+      orderItems: a.hasMany("OrderItem", "flavorId"),
     })
     .authorization((allow) => [
       allow.guest().to(["read"]),
@@ -27,6 +43,8 @@ const schema = a.schema({
     .model({
       itemId: a.id(),
       item: a.belongsTo("Item", "itemId"),
+      flavorId: a.id(),
+      flavor: a.belongsTo("Flavor", "flavorId"),
       orderId: a.id(),
       order: a.belongsTo("Order", "orderId"),
       quantity: a.integer().required(),

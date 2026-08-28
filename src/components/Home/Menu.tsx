@@ -20,10 +20,17 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import { MenuItemCard } from "./MenuItemCard";
 
+export type FlavorRecord = {
+  id: string;
+  name: string;
+  available: boolean;
+};
+
 export type MenuItemRecord = {
   id: string;
   name: string;
   description: string;
+  flavors: FlavorRecord[];
 };
 
 export const Menu = ({
@@ -33,7 +40,7 @@ export const Menu = ({
 }: {
   items: MenuItemRecord[];
   isItemsLoading: boolean;
-  onAddToOrder: (item: MenuItemRecord) => Promise<void>;
+  onAddToOrder: (item: MenuItemRecord, flavorId?: string) => Promise<void>;
 }) => {
   const qc = useQueryClient();
   const { authStatus } = useAuthenticator((context) => [context.authStatus]);

@@ -23,10 +23,16 @@ const ORDER_PANEL_WIDTH = 380;
 export type OrderSidePanelItem = {
   id: string;
   itemId: string | null;
+  flavorId: string | null;
   quantity: number;
 };
 
 export type ItemLookupRecord = {
+  id: string;
+  name: string;
+};
+
+export type FlavorLookupRecord = {
   id: string;
   name: string;
 };
@@ -36,6 +42,7 @@ export const OrderSidePanel = ({
   order,
   orderItems,
   itemLookup,
+  flavorLookup,
   totalItems,
   canCompleteOrder,
   onClose,
@@ -54,6 +61,7 @@ export const OrderSidePanel = ({
   } | null;
   orderItems: OrderSidePanelItem[];
   itemLookup: Map<string, ItemLookupRecord>;
+  flavorLookup: Map<string, FlavorLookupRecord>;
   totalItems: number;
   canCompleteOrder: boolean;
   onClose: () => void;
@@ -76,6 +84,7 @@ export const OrderSidePanel = ({
       order={order}
       orderItems={orderItems}
       itemLookup={itemLookup}
+      flavorLookup={flavorLookup}
       totalItems={totalItems}
       canCompleteOrder={canCompleteOrder}
       onClose={onClose}
@@ -93,6 +102,7 @@ const OrderSidePanelContent = ({
   order,
   orderItems,
   itemLookup,
+  flavorLookup,
   totalItems,
   canCompleteOrder,
   onClose,
@@ -110,6 +120,7 @@ const OrderSidePanelContent = ({
   };
   orderItems: OrderSidePanelItem[];
   itemLookup: Map<string, ItemLookupRecord>;
+  flavorLookup: Map<string, FlavorLookupRecord>;
   totalItems: number;
   canCompleteOrder: boolean;
   onClose: () => void;
@@ -246,6 +257,8 @@ const OrderSidePanelContent = ({
           {orderItems.map((orderItem) => {
             const itemId = orderItem.itemId ?? "";
             const item = itemLookup.get(itemId);
+            const flavor = orderItem.flavorId ? flavorLookup.get(orderItem.flavorId) : undefined;
+            const itemLabel = flavor ? `${item?.name ?? "Unknown Item"} — ${flavor.name}` : item?.name ?? "Unknown Item";
 
             return (
               <ListItem
@@ -265,7 +278,7 @@ const OrderSidePanelContent = ({
                 <ListItemText
                   primary={
                     <Typography sx={{ fontSize: { xs: "0.85rem", md: "1rem" }, lineHeight: 1.2 }}>
-                      {item?.name ?? "Unknown Item"}
+                      {itemLabel}
                     </Typography>
                   }
                   secondary={

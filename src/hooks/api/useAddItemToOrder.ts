@@ -6,18 +6,29 @@ export const useAddItemToOrder = () => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: async ({ itemId, orderId }: { itemId: string; orderId: string | null }) => {
+    mutationFn: async ({
+      itemId,
+      flavorId,
+      orderId,
+    }: {
+      itemId: string;
+      flavorId?: string | null;
+      orderId: string | null;
+    }) => {
       // If there is no active selected order, ignore the input as requested.
       if (!orderId) {
         return null;
       }
 
       const existingOrderItems = await client.models.OrderItem.list({
-        selectionSet: ["id", "orderId", "itemId", "quantity"],
+        selectionSet: ["id", "orderId", "itemId", "flavorId", "quantity"],
       });
 
       const existingOrderItem = existingOrderItems.data.find(
-        (orderItem) => orderItem.orderId === orderId && orderItem.itemId === itemId,
+        (orderItem) =>
+          orderItem.orderId === orderId &&
+          orderItem.itemId === itemId &&
+          (orderItem.flavorId ?? null) === (flavorId ?? null),
       );
 
       if (existingOrderItem) {
@@ -29,6 +40,7 @@ export const useAddItemToOrder = () => {
         await client.models.OrderItem.create({
           orderId,
           itemId,
+          flavorId: flavorId ?? null,
           quantity: 1,
         });
       }

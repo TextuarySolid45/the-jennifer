@@ -15,6 +15,7 @@ const state = vi.hoisted(() => ({
   }>,
   orderItems: [] as Array<{ id: string; orderId: string; itemId: string; quantity: number }>,
   visits: [] as Array<{ id: string; startDate: string; endDate: string; label: string | null }>,
+  flavors: [] as Array<{ id: string; itemId: string; name: string; available: boolean }>,
 }));
 
 const mocks = vi.hoisted(() => ({
@@ -74,6 +75,10 @@ vi.mock("../../../hooks/api/useUpdateOrder", () => ({
 
 vi.mock("../../../hooks/api/useGetVisits", () => ({
   useGetVisits: () => ({ data: { data: state.visits }, isLoading: false }),
+}));
+
+vi.mock("../../../hooks/api/useGetFlavors", () => ({
+  useGetFlavors: () => ({ data: { data: state.flavors }, isLoading: false }),
 }));
 
 vi.mock("../Menu", () => ({
@@ -220,6 +225,7 @@ describe("Home flows", () => {
 
     state.orderItems = [];
     state.visits = [];
+    state.flavors = [];
 
     vi.clearAllMocks();
 
